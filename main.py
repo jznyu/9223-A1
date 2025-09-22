@@ -55,10 +55,9 @@ def get_log_entry(log_index, debug=False):
         print(json.dumps(entry, indent=2))
     return entry
 
-def get_verification_proof(log_index: int, debug=False) -> dict:
+def get_verification_proof(entry: dict, debug=False) -> dict:
     # _require_positive_int(log_index)
 
-    entry = get_log_entry(log_index, debug)
     payload = next(iter(entry.values()))
     inclusion_proof = payload["verification"]["inclusionProof"]
 
@@ -80,6 +79,7 @@ def get_verification_proof(log_index: int, debug=False) -> dict:
     return index, root_hash, tree_size, hashes, leaf_hash
 
 def inclusion(log_index: int, artifact_filepath: str, debug=False) -> bool:
+    # verify that log index and artifact filepath values are sane
     _require_positive_int(log_index)
     if not artifact_filepath or not os.path.isfile(artifact_filepath):
         raise FileNotFoundError(f"Artifact file not found at: {artifact_filepath}")
@@ -91,33 +91,45 @@ def inclusion(log_index: int, artifact_filepath: str, debug=False) -> bool:
     if not verify_artifact_signature(signature, public_key_pem, artifact_filepath):
         raise ValueError(f"Artifact signature verification failed")
 
-    index, root_hash, tree_size, hashes, leaf_hash = get_verification_proof(log_index, debug)
+    index, root_hash, tree_size, hashes, leaf_hash = get_verification_proof(entry, debug)
 
     verify_inclusion(DefaultHasher, index, tree_size, leaf_hash, hashes, root_hash, debug=False)
 
+def get_latest_checkpoint(debug=False):
+    entry_url = f"{REKOR_BASE_URL}/api/v1/log"
+    response = requests.get(entry_url, timeout=10)
+    response.raise_for_status()
+    data = response.json()
+    checkpoint = {
+        "treeID": data["treeID"],
+        "treeSize": data["treeSize"],
+        "rootHash": data["rootHash"]
+    }
+    return checkpoint
 
+def _main():
+    debug = False
+    parser = argparse.ArgumentParser(description="Rekor Verifier")
+    parser.add_argument('-d', '--debug', help='Enable debug mode', required=False,action='store_true')
+    parser.add_argument('-c', '--checkpoint', help='Obtain latest checkpoint from Rekor Server public instance', required=False, action='store_true')
+    parser.add_argument('--inclusion', help='Verify inclusion of an entry in the Rekor Transparency Log using log index and artifact filepath. Usage: python main.py --inclusion <log index> <artifact filepath>', required=False, type=int)
+    parser.add_argument('--artifact', help="Artifact filepath for verifying signature. Usage: python main.py --artifact <artifact filepath>", required=False)
 
-def _main() -> None:
-    parser = argparse.ArgumentParser(description="Fetch a Rekor log entry by index")
-    parser.add_argument("--index", type=int, required=True, help="log index to fetch")
     args = parser.parse_args()
 
-    inclusion(args.index, "artifact.md", debug=True)
+    if args.inclusion is not None and not args.artifact:
+        parser.error("--artifact is required when using --inclusion")
 
-    # entry = get_log_entry(args.index)
-    # print(json.dumps(entry, indent=2))
-    # signature, certificate_pem, _ = _extract_sig_and_cert_from_entry(entry) 
-    # print(f"signature: {signature}")
-    # print(f"signature type: {type(signature)}")
-    # print(f"================================================")
-    # print(f"certificate_ipem: {certificate_pem}")
-    # print(f"certificate_pem type: {type(certificate_pem)}")
-    # print(f"================================================")
-    # public_key = extract_public_key(certificate_pem)
-    # print(f"public_key: {public_key}")
-    # print(f"public_key type: {type(public_key)}")
-    # print(f"================================================")
-    # verify_artifact_signature(signature, public_key, "artifact.md")
-    # inclusion(args.index, "artifact.md")
+    if args.debug:
+        debug = True
+        print("Debug mode enabled")
+    if args.checkpoint:
+        # get and print latest checkpoint from server
+        checkpoint = get_latest_checkpoint(debug)
+        if debug:
+            print(json.dumps(checkpoint, indent=4))
+    if args.inclusion:
+        inclusion(args.inclusion, args.artifact, debug)
+
 if __name__ == "__main__":
     _main()
