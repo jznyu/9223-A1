@@ -16,7 +16,7 @@ import requests
 import base64
 import os
 from util import extract_public_key, verify_artifact_signature
-from merkle_proof import DefaultHasher, compute_leaf_hash, verify_inclusion
+from merkle_proof import DefaultHasher, verify_consistency, compute_leaf_hash, verify_inclusion
 
 REKOR_BASE_URL = "https://rekor.sigstore.dev"
 
@@ -93,27 +93,61 @@ def inclusion(log_index: int, artifact_filepath: str, debug=False) -> bool:
 
     index, root_hash, tree_size, hashes, leaf_hash = get_verification_proof(entry, debug)
 
-    verify_inclusion(DefaultHasher, index, tree_size, leaf_hash, hashes, root_hash, debug=False)
+    verify_inclusion(DefaultHasher, index, tree_size, leaf_hash, hashes, root_hash, debug=True)
 
 def get_latest_checkpoint(debug=False):
     entry_url = f"{REKOR_BASE_URL}/api/v1/log"
     response = requests.get(entry_url, timeout=10)
     response.raise_for_status()
     data = response.json()
-    checkpoint = {
-        "treeID": data["treeID"],
-        "treeSize": data["treeSize"],
-        "rootHash": data["rootHash"]
-    }
-    return checkpoint
+    return data
+
+def get_consistency_proof(first_size: int, last_size:int, tree_id: str, debug=False):
+    url = f"{REKOR_BASE_URL}/api/v1/log/proof"
+    params = {"firstSize": first_size, "lastSize": last_size}
+    if tree_id:
+        params["treeID"] = tree_id
+    response = requests.get(url,params=params, timeout=10)
+    response.raise_for_status()
+    data = response.json()
+    hashes = data.get("hashes", [])
+    if debug:
+        print(json.dumps({"firstSize": first_size, "lastSize": last_size, "treeID": tree_id, "hashes": hashes}))
+    return hashes
+
+def consistency(checkpoint:dict, debug=False):
+    # verify that prev checkpoint is not empty
+    if not checkpoint:
+        print("please specify previous checkpoint")
+        return
+    # get_latest_checkpoint
+    latest_checkpoint = get_latest_checkpoint(debug)
+    proof_hashes = get_consistency_proof(
+        checkpoint["treeSize"],
+        latest_checkpoint["treeSize"],
+        checkpoint["treeID"], debug
+    )
+    verify_consistency(
+        DefaultHasher,
+        checkpoint["treeSize"],
+        latest_checkpoint["treeSize"],
+        proof_hashes,
+        checkpoint["rootHash"],
+        latest_checkpoint["rootHash"]
+    )
+
 
 def _main():
     debug = False
     parser = argparse.ArgumentParser(description="Rekor Verifier")
-    parser.add_argument('-d', '--debug', help='Enable debug mode', required=False,action='store_true')
+    parser.add_argument('-d', '--debug', help='Enable debug mode', required=False, action='store_true')
     parser.add_argument('-c', '--checkpoint', help='Obtain latest checkpoint from Rekor Server public instance', required=False, action='store_true')
     parser.add_argument('--inclusion', help='Verify inclusion of an entry in the Rekor Transparency Log using log index and artifact filepath. Usage: python main.py --inclusion <log index> <artifact filepath>', required=False, type=int)
     parser.add_argument('--artifact', help="Artifact filepath for verifying signature. Usage: python main.py --artifact <artifact filepath>", required=False)
+    parser.add_argument('--consistency', help= "Verify consistency of a given previous checkpoint with the latest checkpoint.", action='store_true')
+    parser.add_argument('--tree-id', help="Tree ID for consistency proof.", required=False)
+    parser.add_argument('--tree-size', help="Tree size for consistency proof.", required=False, type=int)
+    parser.add_argument('--root-hash', help="Root hash for consistency proof.", required=False)
 
     args = parser.parse_args()
 
@@ -125,11 +159,33 @@ def _main():
         print("Debug mode enabled")
     if args.checkpoint:
         # get and print latest checkpoint from server
+        # if debug is enabled, store it in a file checkpoint.json
         checkpoint = get_latest_checkpoint(debug)
+        print(json.dumps(checkpoint, indent=4))
         if debug:
-            print(json.dumps(checkpoint, indent=4))
+            with open(f"checkpoint-{checkpoint['treeID']}-{checkpoint['treeSize']}.json", "w") as f:
+                json.dump(checkpoint, f, indent=4)
+            print("Checkpoint stored in checkpoint.json")
     if args.inclusion:
         inclusion(args.inclusion, args.artifact, debug)
+    if args.consistency:
+        if not args.tree_id:
+            print("please specify tree id for previous checkpoint")
+            return
+        if not args.tree_size:
+            print("please specify tree size for previous checkpoint")
+            return
+        if not args.root_hash:
+            print("please specify root hash for previous checkpoint")
+            return
+
+        prev_checkpoint = {
+            "treeID": args.tree_id,
+            "treeSize": args.tree_size,
+            "rootHash": args.root_hash
+        }
+
+        consistency(prev_checkpoint, debug)
 
 if __name__ == "__main__":
     _main()
