@@ -1,2 +1,2 @@
-sigstore==3.6.5
 requests>=2.31,<3
+cryptography>=46.0.1,<47
