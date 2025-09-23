@@ -1,15 +1,3 @@
-""" 
-4. Implement code to fetch the entry details from the Rekor log given log index.
-
-5. Extract signature and certificate from the log entry. (Note: Entries are stored in base64 encoded format in the log, will need to decode them)
-
-6. Extract public key from the certificate using the given utility function `extract_public_key`
-
-7. Using the obtained signature and public key from the transparency log entry, verify the validity of the signature given artifact using the utility function `verify_artifact_signature`.
-
-8. Using the entry details obtained earlier, use the `verification → inclusionProof` keys to obtain the `leaf_hash`,`index`,`root_hash`,`tree_size`, and `hashes` list and pass it to the `verify_inclusion` function from `merkle_proof.py` to verify the merkle proof.
-
-"""
 import argparse
 import json
 import requests
@@ -165,7 +153,7 @@ def _main():
         if debug:
             with open(f"checkpoint-{checkpoint['treeID']}-{checkpoint['treeSize']}.json", "w") as f:
                 json.dump(checkpoint, f, indent=4)
-            print("Checkpoint stored in checkpoint.json")
+            print(f"Checkpoint stored in checkpoint-{checkpoint['treeID']}-{checkpoint['treeSize']}.json")
     if args.inclusion:
         inclusion(args.inclusion, args.artifact, debug)
     if args.consistency:
