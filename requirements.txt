@@ -1,2 +1,3 @@
 requests>=2.31,<3
 cryptography>=46.0.1,<47
+ruff>=0.13.3
