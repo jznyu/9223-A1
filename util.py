@@ -1,4 +1,5 @@
 from cryptography import x509
+from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePublicKey
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import load_pem_public_key
@@ -33,6 +34,8 @@ def verify_artifact_signature(
     signature: bytes, public_key_pem: bytes, artifact_filename: str
 ) -> bool:
     public_key = load_pem_public_key(public_key_pem)
+    if not isinstance(public_key, EllipticCurvePublicKey):
+        raise TypeError(f"Expected EllipticCurvePublicKey, got {type(public_key)}")
 
     with open(artifact_filename, "rb") as data_file:
         data = data_file.read()

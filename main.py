@@ -53,7 +53,7 @@ def get_log_entry(log_index, debug=False):
     return entry
 
 
-def get_verification_proof(entry: dict, debug=False) -> dict:
+def get_verification_proof(entry: dict, debug=False) -> tuple[int, str, int, list[str], str]:
     # _require_positive_int(log_index)
 
     payload = next(iter(entry.values()))
@@ -81,7 +81,7 @@ def get_verification_proof(entry: dict, debug=False) -> dict:
     return index, root_hash, tree_size, hashes, leaf_hash
 
 
-def inclusion(log_index: int, artifact_filepath: str, debug=False) -> bool:
+def inclusion(log_index: int, artifact_filepath: str, debug=False) -> None:
     # verify that log index and artifact filepath values are sane
     _require_positive_int(log_index)
     if not artifact_filepath or not os.path.isfile(artifact_filepath):
@@ -111,9 +111,11 @@ def get_latest_checkpoint(debug=False):
     return data
 
 
-def get_consistency_proof(first_size: int, last_size: int, tree_id: str, debug=False):
+def get_consistency_proof(last_size: int, first_size: int = 1, tree_id: str = "", debug=False):
     url = f"{REKOR_BASE_URL}/api/v1/log/proof"
-    params = {"firstSize": first_size, "lastSize": last_size}
+    params: dict[str, int | str] = {"lastSize": last_size}
+    if first_size != 1:
+        params["firstSize"] = first_size
     if tree_id:
         params["treeID"] = tree_id
     response = requests.get(url, params=params, timeout=10)
