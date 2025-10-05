@@ -53,7 +53,9 @@ def get_log_entry(log_index, debug=False):
     return entry
 
 
-def get_verification_proof(entry: dict, debug=False) -> tuple[int, str, int, list[str], str]:
+def get_verification_proof(
+    entry: dict, debug=False
+) -> tuple[int, str, int, list[str], str]:
     # _require_positive_int(log_index)
 
     payload = next(iter(entry.values()))
@@ -111,7 +113,9 @@ def get_latest_checkpoint(debug=False):
     return data
 
 
-def get_consistency_proof(last_size: int, first_size: int = 1, tree_id: str = "", debug=False):
+def get_consistency_proof(
+    last_size: int, first_size: int = 1, tree_id: str = "", debug=False
+):
     url = f"{REKOR_BASE_URL}/api/v1/log/proof"
     params: dict[str, int | str] = {"lastSize": last_size}
     if first_size != 1:
