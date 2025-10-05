@@ -272,9 +272,6 @@ def _main():
             print(f"Checkpoint stored in {filename}")
     if args.inclusion:
         inclusion(args.inclusion, args.artifact, debug)
-        print(
-            f"\nInclusion verified for artifact {args.artifact} at log index {args.inclusion}"
-        )
     if args.consistency:
         if not args.tree_id:
             print("please specify tree id for previous checkpoint")
