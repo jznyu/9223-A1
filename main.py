@@ -131,6 +131,13 @@ def inclusion(log_index: int, artifact_filepath: str, debug=False) -> None:
         DefaultHasher, index, tree_size, leaf_hash, hashes, root_hash, debug=debug
     )
 
+    # Check if the entry is included in the latest checkpoint
+    latest_checkpoint = get_latest_checkpoint()
+    if log_index < latest_checkpoint["treeSize"]:
+        print(f"Log entry at index {log_index} is included in the latest checkpoint (tree size: {latest_checkpoint['treeSize']})") # pylint: disable=line-too-long
+    else:
+        print(f"Log entry at index {log_index} is NOT yet included in the latest checkpoint (tree size: {latest_checkpoint['treeSize']})") # pylint: disable=line-too-long
+
 
 def get_latest_checkpoint() -> dict:
     """Get the latest checkpoint from Rekor.
@@ -293,6 +300,7 @@ def _main():
         }
 
         consistency(prev_checkpoint, debug)
+        print("\nConsistency verification successful")
 
 
 if __name__ == "__main__":
