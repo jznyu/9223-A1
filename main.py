@@ -1,8 +1,12 @@
+"""Rekor transparency log verifier for inclusion and consistency proofs."""
+
 import argparse
 import json
-import requests
 import base64
 import os
+
+import requests
+
 from util import extract_public_key, verify_artifact_signature
 from merkle_proof import (
     DefaultHasher,
@@ -31,11 +35,8 @@ def _extract_sig_and_cert_from_entry(entry: dict) -> tuple[bytes, bytes, dict]:
     body_b64 = payload["body"]
     body_obj = json.loads(base64.b64decode(body_b64))
 
-    try:
-        sig_b64 = body_obj["spec"]["signature"]["content"]
-        cert_b64 = body_obj["spec"]["signature"]["publicKey"]["content"]
-    except KeyError as e:
-        raise ValueError(f"Missing key in entry: {e}")
+    sig_b64 = body_obj["spec"]["signature"]["content"]
+    cert_b64 = body_obj["spec"]["signature"]["publicKey"]["content"]
 
     if not sig_b64 or not cert_b64:
         raise ValueError("Missing signature or certificate in entry")
@@ -45,17 +46,39 @@ def _extract_sig_and_cert_from_entry(entry: dict) -> tuple[bytes, bytes, dict]:
     return signature, certificate_pem, payload
 
 
-def get_log_entry(log_index, debug=False):
-    # _require_positive_int(log_index)
+def get_log_entry(log_index: int, debug=False):
+    """Fetch a log entry from Rekor by index.
+
+    Args:
+        log_index (int): The index of the entry in the transparency log to be retrieved.
+        debug (bool, optional): Whether to print the log entry. Defaults to False.
+
+    Returns:
+        dict: The log entry from Rekor.
+    """
     entry = _get_entry_index(log_index)
     if debug:
         print(json.dumps(entry, indent=2))
     return entry
 
 
-def get_verification_proof(entry: dict, debug=False) -> dict:
-    # _require_positive_int(log_index)
+def get_verification_proof(
+    entry: dict, debug=False
+) -> tuple[int, str, int, list[str], str]:
+    """Get verification proof from log entry.
 
+    Args:
+        entry (dict): The log entry.
+        debug (bool, optional): Whether to print debug info. Defaults to False.
+
+    Returns:
+        tuple[int, str, int, list[str], str]: Verification proof components:
+        - index: The log index of the entry.
+        - root_hash: The root hash of the tree.
+        - tree_size: The size of the Merkle tree.
+        - hashes: The list of hashes of the inclusion proof.
+        - leaf_hash: The computed hash of the leaf entry.
+    """
     payload = next(iter(entry.values()))
     inclusion_proof = payload["verification"]["inclusionProof"]
 
@@ -81,8 +104,14 @@ def get_verification_proof(entry: dict, debug=False) -> dict:
     return index, root_hash, tree_size, hashes, leaf_hash
 
 
-def inclusion(log_index: int, artifact_filepath: str, debug=False) -> bool:
-    # verify that log index and artifact filepath values are sane
+def inclusion(log_index: int, artifact_filepath: str, debug=False) -> None:
+    """Verify inclusion of an entry in the Rekor Transparency Log.
+
+    Args:
+        log_index (int): The index of the entry in the transparency log to be verified.
+        artifact_filepath (str): The filepath of the artifact to be verified.
+        debug (bool, optional): Whether to print debug info. Defaults to False.
+    """
     _require_positive_int(log_index)
     if not artifact_filepath or not os.path.isfile(artifact_filepath):
         raise FileNotFoundError(f"Artifact file not found at: {artifact_filepath}")
@@ -99,11 +128,16 @@ def inclusion(log_index: int, artifact_filepath: str, debug=False) -> bool:
     )
 
     verify_inclusion(
-        DefaultHasher, index, tree_size, leaf_hash, hashes, root_hash, debug=True
+        DefaultHasher, index, tree_size, leaf_hash, hashes, root_hash, debug=debug
     )
 
 
-def get_latest_checkpoint(debug=False):
+def get_latest_checkpoint() -> dict:
+    """Get the latest checkpoint from Rekor.
+
+    Returns:
+        dict: The latest checkpoint.
+    """
     entry_url = f"{REKOR_BASE_URL}/api/v1/log"
     response = requests.get(entry_url, timeout=10)
     response.raise_for_status()
@@ -111,9 +145,24 @@ def get_latest_checkpoint(debug=False):
     return data
 
 
-def get_consistency_proof(first_size: int, last_size: int, tree_id: str, debug=False):
+def get_consistency_proof(
+    last_size: int, first_size: int = 1, tree_id: str = "", debug=False
+) -> list[str]:
+    """Get consistency proof from Rekor.
+
+    Args:
+        last_size (int): The size of the last checkpoint.
+        first_size (int, optional): The size of the first checkpoint. Defaults to 1.
+        tree_id (str, optional): The tree ID. Defaults to "".
+        debug (bool, optional): Whether to print debug info. Defaults to False.
+
+    Returns:
+        list[str]: The consistency proof.
+    """
     url = f"{REKOR_BASE_URL}/api/v1/log/proof"
-    params = {"firstSize": first_size, "lastSize": last_size}
+    params: dict[str, int | str] = {"lastSize": last_size}
+    if first_size != 1:
+        params["firstSize"] = first_size
     if tree_id:
         params["treeID"] = tree_id
     response = requests.get(url, params=params, timeout=10)
@@ -135,12 +184,18 @@ def get_consistency_proof(first_size: int, last_size: int, tree_id: str, debug=F
 
 
 def consistency(checkpoint: dict, debug=False):
+    """Verify consistency of a given previous checkpoint with the latest checkpoint.
+
+    Args:
+        checkpoint (dict): The previous checkpoint.
+        debug (bool, optional): Whether to print debug info. Defaults to False.
+    """
     # verify that prev checkpoint is not empty
     if not checkpoint:
         print("please specify previous checkpoint")
         return
     # get_latest_checkpoint
-    latest_checkpoint = get_latest_checkpoint(debug)
+    latest_checkpoint = get_latest_checkpoint()
     proof_hashes = get_consistency_proof(
         checkpoint["treeSize"],
         latest_checkpoint["treeSize"],
@@ -172,13 +227,13 @@ def _main():
     )
     parser.add_argument(
         "--inclusion",
-        help="Verify inclusion of an entry in the Rekor Transparency Log using log index and artifact filepath. Usage: python main.py --inclusion <log index> <artifact filepath>",
+        help="Verify inclusion of an entry in the Rekor Transparency Log",
         required=False,
         type=int,
     )
     parser.add_argument(
         "--artifact",
-        help="Artifact filepath for verifying signature. Usage: python main.py --artifact <artifact filepath>",
+        help="Artifact filepath for verifying signature",
         required=False,
     )
     parser.add_argument(
@@ -207,18 +262,19 @@ def _main():
     if args.checkpoint:
         # get and print latest checkpoint from server
         # if debug is enabled, store it in a file checkpoint.json
-        checkpoint = get_latest_checkpoint(debug)
+        checkpoint = get_latest_checkpoint()
         print(json.dumps(checkpoint, indent=4))
+        filename = f"checkpoint-{checkpoint['treeID']}-{checkpoint['treeSize']}.json"
+
         if debug:
-            with open(
-                f"checkpoint-{checkpoint['treeID']}-{checkpoint['treeSize']}.json", "w"
-            ) as f:
+            with open(filename, "w", encoding="utf-8") as f:
                 json.dump(checkpoint, f, indent=4)
-            print(
-                f"Checkpoint stored in checkpoint-{checkpoint['treeID']}-{checkpoint['treeSize']}.json"
-            )
+            print(f"Checkpoint stored in {filename}")
     if args.inclusion:
         inclusion(args.inclusion, args.artifact, debug)
+        print(
+            f"\nInclusion verified for artifact {args.artifact} at log index {args.inclusion}"
+        )
     if args.consistency:
         if not args.tree_id:
             print("please specify tree id for previous checkpoint")

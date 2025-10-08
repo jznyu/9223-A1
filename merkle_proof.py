@@ -1,3 +1,5 @@
+"""Merkle proof verification functions."""
+
 import hashlib
 import binascii
 import base64
@@ -8,28 +10,35 @@ RFC6962_NODE_HASH_PREFIX = 1
 
 
 class Hasher:
+    """Hasher class for Merkle proof verification."""
+
     def __init__(self, hash_func=hashlib.sha256):
         self.hash_func = hash_func
 
     def new(self):
+        """Create a new hash object."""
         return self.hash_func()
 
     def empty_root(self):
+        """Create an empty root."""
         return self.new().digest()
 
     def hash_leaf(self, leaf):
+        """Hash a leaf."""
         h = self.new()
         h.update(bytes([RFC6962_LEAF_HASH_PREFIX]))
         h.update(leaf)
         return h.digest()
 
     def hash_children(self, left, right):
+        """Hash two children."""
         h = self.new()
         b = bytes([RFC6962_NODE_HASH_PREFIX]) + left + right
         h.update(b)
         return h.digest()
 
     def size(self):
+        """Get the size of the hash."""
         return self.new().digest_size
 
 
@@ -37,7 +46,8 @@ class Hasher:
 DefaultHasher = Hasher(hashlib.sha256)
 
 
-def verify_consistency(hasher, size1, size2, proof, root1, root2):
+def verify_consistency(hasher, size1, size2, proof, root1, root2):  # pylint: disable=too-many-locals, too-many-arguments, too-many-positional-arguments
+    """Verify consistency of two Merkle trees."""
     # change format of args to be bytearray instead of hex strings
     root1 = bytes.fromhex(root1)
     root2 = bytes.fromhex(root2)
@@ -88,21 +98,25 @@ def verify_consistency(hasher, size1, size2, proof, root1, root2):
 
 
 def verify_match(calculated, expected):
+    """Verify if the calculated root matches the expected root."""
     if calculated != expected:
         raise RootMismatchError(expected, calculated)
 
 
 def decomp_incl_proof(index, size):
+    """Decompose the inclusion proof."""
     inner = inner_proof_size(index, size)
     border = bin(index >> inner).count("1")
     return inner, border
 
 
 def inner_proof_size(index, size):
+    """Get the size of the inner proof."""
     return (index ^ (size - 1)).bit_length()
 
 
 def chain_inner(hasher, seed, proof, index):
+    """Chain the inner proof."""
     for i, h in enumerate(proof):
         if (index >> i) & 1 == 0:
             seed = hasher.hash_children(seed, h)
@@ -112,6 +126,7 @@ def chain_inner(hasher, seed, proof, index):
 
 
 def chain_inner_right(hasher, seed, proof, index):
+    """Chain the inner proof right."""
     for i, h in enumerate(proof):
         if (index >> i) & 1 == 1:
             seed = hasher.hash_children(h, seed)
@@ -119,21 +134,25 @@ def chain_inner_right(hasher, seed, proof, index):
 
 
 def chain_border_right(hasher, seed, proof):
+    """Chain the border proof right."""
     for h in proof:
         seed = hasher.hash_children(h, seed)
     return seed
 
 
 class RootMismatchError(Exception):
+    """Root mismatch error."""
+
     def __init__(self, expected_root, calculated_root):
         self.expected_root = binascii.hexlify(bytearray(expected_root))
         self.calculated_root = binascii.hexlify(bytearray(calculated_root))
 
     def __str__(self):
-        return f"calculated root:\n{self.calculated_root}\n does not match expected root:\n{self.expected_root}"
+        return f"calculated root:\n{self.calculated_root}\n does not match expected root:\n{self.expected_root}"  # pylint: disable=line-too-long
 
 
 def root_from_inclusion_proof(hasher, index, size, leaf_hash, proof):
+    """Get the root from the inclusion proof."""
     if index >= size:
         raise ValueError(f"index is beyond size: {index} >= {size}")
 
@@ -151,7 +170,8 @@ def root_from_inclusion_proof(hasher, index, size, leaf_hash, proof):
     return res
 
 
-def verify_inclusion(hasher, index, size, leaf_hash, proof, root, debug=False):
+def verify_inclusion(hasher, index, size, leaf_hash, proof, root, debug=False):  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    """Verify the inclusion proof."""
     bytearray_proof = []
     for elem in proof:
         bytearray_proof.append(bytes.fromhex(elem))
@@ -170,6 +190,7 @@ def verify_inclusion(hasher, index, size, leaf_hash, proof, root, debug=False):
 # requires entry["body"] output for a log entry
 # returns the leaf hash according to the rfc 6962 spec
 def compute_leaf_hash(body):
+    """Compute the leaf hash."""
     entry_bytes = base64.b64decode(body)
 
     # create a new sha256 hash object
