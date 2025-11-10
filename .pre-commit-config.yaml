@@ -5,4 +5,5 @@ repos:
       - id: trufflehog
         name: TruffleHog Secret Scanning
         entry: trufflehog git file://. --since-commit HEAD --only-verified --fail
-        args: []
+        language: system
+        pass_filenames: false
