@@ -4,6 +4,6 @@ repos:
     hooks:
       - id: trufflehog
         name: TruffleHog Secret Scanning
-        entry: trufflehog git file://. --since-commit HEAD --only-verified --fail
+        entry: trufflehog git file://. --since-commit HEAD --fail
         language: system
         pass_filenames: false
