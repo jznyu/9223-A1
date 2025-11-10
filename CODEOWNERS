@@ -1,0 +1,7 @@
+# CODEOWNERS file
+# This file defines who is responsible for code in the repository.
+# When a pull request modifies files, GitHub will automatically request reviews from the owners.
+
+# All files owned by jznyu
+* @jznyu
+
