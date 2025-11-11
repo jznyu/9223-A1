@@ -3,5 +3,3 @@ repos:
     rev: v3.90.13
     hooks:
       - id: trufflehog
-        name: TruffleHog Secret Scanning
-        stages: [commit]
