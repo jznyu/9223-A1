@@ -1,0 +1,44 @@
+Part 3: Scrub Old Secrets - Writeup
+========================================
+
+Commands Used to Remove personal.txt from Repository History
+------------------------------------------------------------
+
+1. Made git-filter-repo executable:
+   
+   chmod +x git-filter-repo
+
+2. Used git-filter-repo to remove personal.txt from entire git history:
+   
+   python3 ./git-filter-repo --path personal.txt --invert-paths --force
+
+   Explanation of flags:
+   - --path personal.txt: Specifies the file to operate on
+   - --invert-paths: Inverts the selection (removes the file instead of keeping only it)
+   - --force: Required because we're operating on a non-fresh clone
+
+3. Re-added the remote (git-filter-repo removes it for safety):
+   
+   git remote add origin https://github.com/jznyu/9223-A1.git
+
+4. Force pushed the rewritten history to the remote repository:
+   
+   git push origin --force --all
+
+   Note: --force is necessary because we've rewritten history, which changes
+   commit hashes. This is a destructive operation and should be used carefully.
+
+Results:
+--------
+- personal.txt was successfully removed from all commits in the repository history
+- The file was also removed from the working directory
+- Git-filter-repo processed 37 commits and rewrote the history in 0.21 seconds
+- The commit that originally added personal.txt (2cf0919) no longer contains it
+
+Important Notes:
+---------------
+- Force pushing rewrites history and can cause issues for collaborators
+- Anyone else who has cloned the repository will need to reclone it or reset their local copy
+- This operation is irreversible once pushed to remote
+- Always ensure you have backups before performing such operations
+
