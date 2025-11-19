@@ -4,12 +4,10 @@ import tempfile
 from unittest.mock import MagicMock, patch
 
 import pytest
-from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives import serialization
 
 from util import extract_public_key, verify_artifact_signature
-
 
 # Sample EC private key and certificate for testing
 SAMPLE_EC_PRIVATE_KEY_PEM = b"""-----BEGIN EC PRIVATE KEY-----
@@ -21,11 +19,11 @@ qHwB8OYD5rQqN0PvB3FXmXhCLPgzwXcLCA==
 
 def generate_test_certificate() -> bytes:
     """Generate a test certificate with EC key for testing."""
-    import datetime
+    import datetime  # pylint: disable=import-outside-toplevel
 
-    from cryptography import x509
-    from cryptography.hazmat.backends import default_backend
-    from cryptography.x509.oid import NameOID
+    from cryptography import x509  # pylint: disable=import-outside-toplevel
+    from cryptography.hazmat.backends import default_backend  # pylint: disable=import-outside-toplevel
+    from cryptography.x509.oid import NameOID  # pylint: disable=import-outside-toplevel
 
     # Generate a private key
     private_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
@@ -48,7 +46,9 @@ def generate_test_certificate() -> bytes:
         .public_key(private_key.public_key())
         .serial_number(x509.random_serial_number())
         .not_valid_before(datetime.datetime.now(datetime.timezone.utc))
-        .not_valid_after(datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=365))
+        .not_valid_after(
+            datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=365)
+        )  # pylint: disable=line-too-long
         .sign(private_key, hashes.SHA256(), default_backend())
     )
 
@@ -84,7 +84,7 @@ class TestExtractPublicKey:
         """Test error handling with invalid certificate."""
         invalid_cert = b"not a valid certificate"
 
-        with pytest.raises(Exception):  # Will raise a cryptography exception
+        with pytest.raises(ValueError):
             extract_public_key(invalid_cert)
 
     def test_extract_public_key_format(self) -> None:
@@ -93,7 +93,7 @@ class TestExtractPublicKey:
         public_key_pem = extract_public_key(cert_pem)
 
         # Should be able to load the public key
-        from cryptography.hazmat.primitives.serialization import load_pem_public_key
+        from cryptography.hazmat.primitives.serialization import load_pem_public_key  # pylint: disable=import-outside-toplevel
 
         public_key = load_pem_public_key(public_key_pem)
         assert public_key is not None
@@ -105,7 +105,7 @@ class TestVerifyArtifactSignature:
     def test_verify_artifact_signature_valid(self) -> None:
         """Test signature verification with valid signature."""
         # Generate test key and certificate
-        from cryptography.hazmat.backends import default_backend
+        from cryptography.hazmat.backends import default_backend  # pylint: disable=import-outside-toplevel
 
         private_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
         public_key = private_key.public_key()
@@ -131,13 +131,13 @@ class TestVerifyArtifactSignature:
 
             assert result is True
         finally:
-            import os
+            import os  # pylint: disable=import-outside-toplevel
 
             os.unlink(tmp_path)
 
     def test_verify_artifact_signature_invalid(self) -> None:
         """Test signature verification with invalid signature."""
-        from cryptography.hazmat.backends import default_backend
+        from cryptography.hazmat.backends import default_backend  # pylint: disable=import-outside-toplevel
 
         private_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
         public_key = private_key.public_key()
@@ -163,14 +163,14 @@ class TestVerifyArtifactSignature:
 
             assert result is False
         finally:
-            import os
+            import os  # pylint: disable=import-outside-toplevel
 
             os.unlink(tmp_path)
 
     def test_verify_artifact_signature_wrong_key_type(self) -> None:
         """Test error handling with wrong key type."""
-        from cryptography.hazmat.primitives.asymmetric import rsa
-        from cryptography.hazmat.backends import default_backend
+        from cryptography.hazmat.backends import default_backend  # pylint: disable=import-outside-toplevel
+        from cryptography.hazmat.primitives.asymmetric import rsa  # pylint: disable=import-outside-toplevel
 
         # Generate RSA key instead of EC
         private_key = rsa.generate_private_key(
@@ -191,18 +191,16 @@ class TestVerifyArtifactSignature:
         try:
             signature = b"fake_signature"
 
-            with pytest.raises(
-                TypeError, match="Expected EllipticCurvePublicKey"
-            ):
+            with pytest.raises(TypeError, match="Expected EllipticCurvePublicKey"):
                 verify_artifact_signature(signature, public_key_pem, tmp_path)
         finally:
-            import os
+            import os  # pylint: disable=import-outside-toplevel
 
             os.unlink(tmp_path)
 
     def test_verify_artifact_signature_file_not_found(self) -> None:
         """Test error handling when artifact file doesn't exist."""
-        from cryptography.hazmat.backends import default_backend
+        from cryptography.hazmat.backends import default_backend  # pylint: disable=import-outside-toplevel
 
         private_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
         public_key = private_key.public_key()
@@ -221,7 +219,7 @@ class TestVerifyArtifactSignature:
 
     def test_verify_artifact_signature_empty_file(self) -> None:
         """Test signature verification with empty artifact file."""
-        from cryptography.hazmat.backends import default_backend
+        from cryptography.hazmat.backends import default_backend  # pylint: disable=import-outside-toplevel
 
         private_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
         public_key = private_key.public_key()
@@ -243,13 +241,13 @@ class TestVerifyArtifactSignature:
 
             assert result is True
         finally:
-            import os
+            import os  # pylint: disable=import-outside-toplevel
 
             os.unlink(tmp_path)
 
     def test_verify_artifact_signature_large_file(self) -> None:
         """Test signature verification with larger artifact file."""
-        from cryptography.hazmat.backends import default_backend
+        from cryptography.hazmat.backends import default_backend  # pylint: disable=import-outside-toplevel
 
         private_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
         public_key = private_key.public_key()
@@ -272,7 +270,7 @@ class TestVerifyArtifactSignature:
 
             assert result is True
         finally:
-            import os
+            import os  # pylint: disable=import-outside-toplevel
 
             os.unlink(tmp_path)
 
@@ -281,7 +279,7 @@ class TestVerifyArtifactSignature:
         self, mock_print: MagicMock
     ) -> None:
         """Test that successful verification prints success message."""
-        from cryptography.hazmat.backends import default_backend
+        from cryptography.hazmat.backends import default_backend  # pylint: disable=import-outside-toplevel
 
         private_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
         public_key = private_key.public_key()
@@ -302,7 +300,7 @@ class TestVerifyArtifactSignature:
 
             mock_print.assert_called_with("Signature verified successfully")
         finally:
-            import os
+            import os  # pylint: disable=import-outside-toplevel
 
             os.unlink(tmp_path)
 
@@ -311,7 +309,7 @@ class TestVerifyArtifactSignature:
         self, mock_print: MagicMock
     ) -> None:
         """Test that failed verification prints failure message."""
-        from cryptography.hazmat.backends import default_backend
+        from cryptography.hazmat.backends import default_backend  # pylint: disable=import-outside-toplevel
 
         private_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
         public_key = private_key.public_key()
@@ -332,10 +330,9 @@ class TestVerifyArtifactSignature:
             verify_artifact_signature(signature, public_key_pem, tmp_path)
 
             mock_print.assert_called_with(
-                "Signature verification failed: signature is invalid or artifact is not authentic."
+                "Signature verification failed: signature is invalid or artifact is not authentic."  # pylint: disable=line-too-long
             )
         finally:
-            import os
+            import os  # pylint: disable=import-outside-toplevel
 
             os.unlink(tmp_path)
-

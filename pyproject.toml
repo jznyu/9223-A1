@@ -59,6 +59,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
+"tests/*.py" = ["I001"]  # Allow unsorted imports in tests (intentional lazy loading)
 
 [tool.pylint.main]
 py-version = "3.10"

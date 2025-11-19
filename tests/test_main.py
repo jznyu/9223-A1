@@ -8,12 +8,12 @@ import pytest
 from main import (
     _get_entry_index,
     _require_positive_int,
+    consistency,
+    get_consistency_proof,
     get_latest_checkpoint,
     get_log_entry,
     get_verification_proof,
-    get_consistency_proof,
     inclusion,
-    consistency,
 )
 
 
@@ -28,12 +28,16 @@ class TestRequirePositiveInt:
 
     def test_invalid_negative_int(self) -> None:
         """Test that negative integers raise ValueError."""
-        with pytest.raises(ValueError, match="Log index must be a non-negative integer"):
+        with pytest.raises(
+            ValueError, match="Log index must be a non-negative integer"
+        ):  # pylint: disable=line-too-long
             _require_positive_int(-1)
 
     def test_invalid_string(self) -> None:
         """Test that strings raise ValueError."""
-        with pytest.raises(ValueError, match="Log index must be a non-negative integer"):
+        with pytest.raises(
+            ValueError, match="Log index must be a non-negative integer"
+        ):  # pylint: disable=line-too-long
             _require_positive_int("10")  # type: ignore
 
 
@@ -170,7 +174,9 @@ class TestInclusion:
 
     def test_inclusion_with_invalid_index(self) -> None:
         """Test inclusion with invalid log index."""
-        with pytest.raises(ValueError, match="Log index must be a non-negative integer"):
+        with pytest.raises(
+            ValueError, match="Log index must be a non-negative integer"
+        ):  # pylint: disable=line-too-long
             inclusion(-1, "test.txt")
 
     def test_inclusion_with_missing_file(self) -> None:
@@ -186,8 +192,9 @@ class TestInclusion:
     @patch("main._extract_sig_and_cert_from_entry")
     @patch("main.get_log_entry")
     @patch("builtins.print")
-    def test_inclusion_successful( # pylint: disable=too-many-arguments
+    def test_inclusion_successful(  # pylint: disable=too-many-arguments, too-many-positional-arguments, unused-argument
         self,
+        mock_print: MagicMock,
         mock_get_log: MagicMock,
         mock_extract: MagicMock,
         mock_extract_key: MagicMock,
@@ -215,7 +222,7 @@ class TestInclusion:
             mock_verify_inclusion.assert_called_once()
             mock_checkpoint.assert_called_once()
         finally:
-            import os
+            import os  # pylint: disable=import-outside-toplevel
 
             os.unlink(tmp_path)
 
@@ -254,4 +261,3 @@ class TestConsistency:
         consistency(prev_checkpoint)
 
         mock_verify.assert_called_once()
-

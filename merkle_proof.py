@@ -1,8 +1,8 @@
 """Merkle proof verification functions."""
 
-import hashlib
-import binascii
 import base64
+import binascii
+import hashlib
 
 # domain separation prefixes according to the RFC
 RFC6962_LEAF_HASH_PREFIX = 0
@@ -65,7 +65,7 @@ def verify_consistency(hasher, size1, size2, proof, root1, root2):  # pylint: di
     if size1 == 0:
         if bytearray_proof:
             raise ValueError(
-                f"expected empty bytearray_proof, but got {len(bytearray_proof)} components"
+                f"expected empty bytearray_proof, but got {len(bytearray_proof)} components"  # pylint: disable=line-too-long
             )
         return
     if not bytearray_proof:
@@ -82,7 +82,7 @@ def verify_consistency(hasher, size1, size2, proof, root1, root2):  # pylint: di
 
     if len(bytearray_proof) != start + inner + border:
         raise ValueError(
-            f"wrong bytearray_proof size {len(bytearray_proof)}, want {start + inner + border}"
+            f"wrong bytearray_proof size {len(bytearray_proof)}, want {start + inner + border}"  # pylint: disable=line-too-long
         )
 
     bytearray_proof = bytearray_proof[start:]

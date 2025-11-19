@@ -1,12 +1,11 @@
 """Utility functions for signature verification."""
 
 from cryptography import x509
-from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePublicKey
-from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.serialization import load_pem_public_key
-from cryptography.hazmat.primitives import hashes
 from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePublicKey
+from cryptography.hazmat.primitives.serialization import load_pem_public_key
 
 
 # extracts and returns the public key from a certificate provided as PEM bytes or text
@@ -53,7 +52,7 @@ def verify_artifact_signature(
     Returns:
         bool: True if signature verification succeeds (artifact is authentic),
               False if verification fails (signature is invalid or artifact is not authentic).
-    """
+    """  # pylint: disable=line-too-long
     public_key = load_pem_public_key(public_key_pem)
     if not isinstance(public_key, EllipticCurvePublicKey):
         raise TypeError(f"Expected EllipticCurvePublicKey, got {type(public_key)}")
@@ -67,7 +66,7 @@ def verify_artifact_signature(
         print("Signature verified successfully")
         return True
     except InvalidSignature:
-        print(
+        print(  # pylint: disable=line-too-long
             "Signature verification failed: signature is invalid or artifact is not authentic."
         )
         return False

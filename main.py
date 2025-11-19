@@ -1,19 +1,19 @@
 """Rekor transparency log verifier for inclusion and consistency proofs."""
 
 import argparse
-import json
 import base64
+import json
 import os
 
 import requests
 
-from util import extract_public_key, verify_artifact_signature
 from merkle_proof import (
     DefaultHasher,
-    verify_consistency,
     compute_leaf_hash,
+    verify_consistency,
     verify_inclusion,
 )
+from util import extract_public_key, verify_artifact_signature
 
 REKOR_BASE_URL = "https://rekor.sigstore.dev"
 
@@ -134,9 +134,13 @@ def inclusion(log_index: int, artifact_filepath: str, debug=False) -> None:
     # Check if the entry is included in the latest checkpoint
     latest_checkpoint = get_latest_checkpoint()
     if log_index < latest_checkpoint["treeSize"]:
-        print(f"Log entry at index {log_index} is included in the latest checkpoint (tree size: {latest_checkpoint['treeSize']})") # pylint: disable=line-too-long
+        print(
+            f"Log entry at index {log_index} is included in the latest checkpoint (tree size: {latest_checkpoint['treeSize']})"  # pylint: disable=line-too-long
+        )
     else:
-        print(f"Log entry at index {log_index} is NOT yet included in the latest checkpoint (tree size: {latest_checkpoint['treeSize']})") # pylint: disable=line-too-long
+        print(
+            f"Log entry at index {log_index} is NOT yet included in the latest checkpoint (tree size: {latest_checkpoint['treeSize']})"  # pylint: disable=line-too-long
+        )
 
 
 def get_latest_checkpoint() -> dict:
@@ -245,7 +249,7 @@ def _main():
     )
     parser.add_argument(
         "--consistency",
-        help="Verify consistency of a given previous checkpoint with the latest checkpoint.",
+        help="Verify consistency of a given previous checkpoint with the latest checkpoint.",  # pylint: disable=line-too-long
         action="store_true",
     )
     parser.add_argument(
@@ -280,7 +284,7 @@ def _main():
     if args.inclusion:
         inclusion(args.inclusion, args.artifact, debug)
         print(
-            f"\nInclusion verified for artifact {args.artifact} at log index {args.inclusion}"
+            f"\nInclusion verified for artifact {args.artifact} at log index {args.inclusion}"  # pylint: disable=line-too-long
         )
     if args.consistency:
         if not args.tree_id:

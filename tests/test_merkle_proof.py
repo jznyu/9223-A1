@@ -1,26 +1,26 @@
 """Tests for merkle_proof.py functionality."""
 
-import hashlib
 import base64
+import hashlib
 
 import pytest
 
 from merkle_proof import (
-    Hasher,
-    DefaultHasher,
     RFC6962_LEAF_HASH_PREFIX,
     RFC6962_NODE_HASH_PREFIX,
-    verify_consistency,
-    verify_match,
-    decomp_incl_proof,
-    inner_proof_size,
+    DefaultHasher,
+    Hasher,
+    RootMismatchError,
+    chain_border_right,
     chain_inner,
     chain_inner_right,
-    chain_border_right,
-    root_from_inclusion_proof,
-    verify_inclusion,
     compute_leaf_hash,
-    RootMismatchError,
+    decomp_incl_proof,
+    inner_proof_size,
+    root_from_inclusion_proof,
+    verify_consistency,
+    verify_inclusion,
+    verify_match,
 )
 
 
@@ -52,7 +52,9 @@ class TestHasher:
         leaf_hash = hasher.hash_leaf(data)
 
         # Verify it includes the leaf prefix
-        expected_hash = hashlib.sha256(bytes([RFC6962_LEAF_HASH_PREFIX]) + data).digest()
+        expected_hash = hashlib.sha256(
+            bytes([RFC6962_LEAF_HASH_PREFIX]) + data
+        ).digest()  # pylint: disable=line-too-long
         assert leaf_hash == expected_hash
 
     def test_hasher_hash_children(self) -> None:
@@ -265,7 +267,9 @@ class TestVerifyConsistency:
         root2 = "a" * 64
         proof = ["b" * 64]
 
-        with pytest.raises(ValueError, match="size1=size2, but bytearray_proof is not empty"):
+        with pytest.raises(
+            ValueError, match="size1=size2, but bytearray_proof is not empty"
+        ):  # pylint: disable=line-too-long
             verify_consistency(DefaultHasher, 100, 100, proof, root1, root2)
 
     def test_verify_consistency_size2_less_than_size1(self) -> None:
@@ -313,7 +317,7 @@ class TestComputeLeafHash:
         """Test basic leaf hash computation."""
         # Base64 encode some test data
         test_data = {"test": "data"}
-        import json
+        import json  # pylint: disable=import-outside-toplevel
 
         encoded_body = base64.b64encode(json.dumps(test_data).encode()).decode()
 
@@ -339,6 +343,7 @@ class TestComputeLeafHash:
         result = compute_leaf_hash(encoded_body)
 
         # Manually compute expected hash with prefix
-        expected = hashlib.sha256(bytes([RFC6962_LEAF_HASH_PREFIX]) + test_bytes).hexdigest()
+        expected = hashlib.sha256(
+            bytes([RFC6962_LEAF_HASH_PREFIX]) + test_bytes
+        ).hexdigest()  # pylint: disable=line-too-long
         assert result == expected
-
