@@ -1,8 +1,7 @@
 """Tests for main.py functionality."""
 
-import json
 import tempfile
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -187,9 +186,8 @@ class TestInclusion:
     @patch("main._extract_sig_and_cert_from_entry")
     @patch("main.get_log_entry")
     @patch("builtins.print")
-    def test_inclusion_successful(
+    def test_inclusion_successful( # pylint: disable=too-many-arguments
         self,
-        mock_print: MagicMock,
         mock_get_log: MagicMock,
         mock_extract: MagicMock,
         mock_extract_key: MagicMock,
