@@ -18,7 +18,7 @@ from rekor_verifier.merkle_proof import (
 )
 from rekor_verifier.util import extract_public_key, verify_artifact_signature
 
-__version__ = "0.1.0"
+__version__ = "4.0.0"
 
 __all__ = [
     # Main functions

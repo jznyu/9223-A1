@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "jz-rekor-verifier"
-version = "0.1.1"
+version = "4.0.0"
 description = "Rekor transparency log verifier for inclusion and consistency proofs"
 authors = ["jz"]
 readme = "README.md"
