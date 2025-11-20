@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from main import (
+from rekor_verifier.main import (
     _get_entry_index,
     _require_positive_int,
     consistency,
@@ -44,7 +44,7 @@ class TestRequirePositiveInt:
 class TestGetEntryIndex:
     """Test _get_entry_index function."""
 
-    @patch("main.requests.get")
+    @patch("rekor_verifier.main.requests.get")
     def test_successful_entry_fetch(self, mock_get: MagicMock) -> None:
         """Test successful fetching of entry by index."""
         mock_response = MagicMock()
@@ -56,7 +56,7 @@ class TestGetEntryIndex:
         assert result == {"test": "data"}
         mock_get.assert_called_once()
 
-    @patch("main.requests.get")
+    @patch("rekor_verifier.main.requests.get")
     def test_network_error(self, mock_get: MagicMock) -> None:
         """Test network error handling."""
         mock_get.side_effect = Exception("Network error")
@@ -68,7 +68,7 @@ class TestGetEntryIndex:
 class TestGetLatestCheckpoint:
     """Test get_latest_checkpoint function."""
 
-    @patch("main.requests.get")
+    @patch("rekor_verifier.main.requests.get")
     def test_get_latest_checkpoint_success(self, mock_get: MagicMock) -> None:
         """Test successful checkpoint retrieval."""
         mock_response = MagicMock()
@@ -89,7 +89,7 @@ class TestGetLatestCheckpoint:
 class TestGetLogEntry:
     """Test get_log_entry function."""
 
-    @patch("main._get_entry_index")
+    @patch("rekor_verifier.main._get_entry_index")
     def test_get_log_entry_without_debug(self, mock_get_entry: MagicMock) -> None:
         """Test log entry retrieval without debug output."""
         mock_get_entry.return_value = {"entry": "data"}
@@ -99,7 +99,7 @@ class TestGetLogEntry:
         assert result == {"entry": "data"}
         mock_get_entry.assert_called_once_with(123)
 
-    @patch("main._get_entry_index")
+    @patch("rekor_verifier.main._get_entry_index")
     @patch("builtins.print")
     def test_get_log_entry_with_debug(
         self, mock_print: MagicMock, mock_get_entry: MagicMock
@@ -144,7 +144,7 @@ class TestGetVerificationProof:
 class TestGetConsistencyProof:
     """Test get_consistency_proof function."""
 
-    @patch("main.requests.get")
+    @patch("rekor_verifier.main.requests.get")
     def test_get_consistency_proof_basic(self, mock_get: MagicMock) -> None:
         """Test basic consistency proof retrieval."""
         mock_response = MagicMock()
@@ -156,7 +156,7 @@ class TestGetConsistencyProof:
         assert result == ["hash1", "hash2", "hash3"]
         mock_get.assert_called_once()
 
-    @patch("main.requests.get")
+    @patch("rekor_verifier.main.requests.get")
     def test_get_consistency_proof_with_params(self, mock_get: MagicMock) -> None:
         """Test consistency proof with custom parameters."""
         mock_response = MagicMock()
@@ -184,13 +184,13 @@ class TestInclusion:
         with pytest.raises(FileNotFoundError):
             inclusion(123, "/nonexistent/file.txt")
 
-    @patch("main.get_latest_checkpoint")
-    @patch("main.verify_inclusion")
-    @patch("main.get_verification_proof")
-    @patch("main.verify_artifact_signature")
-    @patch("main.extract_public_key")
-    @patch("main._extract_sig_and_cert_from_entry")
-    @patch("main.get_log_entry")
+    @patch("rekor_verifier.main.get_latest_checkpoint")
+    @patch("rekor_verifier.main.verify_inclusion")
+    @patch("rekor_verifier.main.get_verification_proof")
+    @patch("rekor_verifier.main.verify_artifact_signature")
+    @patch("rekor_verifier.main.extract_public_key")
+    @patch("rekor_verifier.main._extract_sig_and_cert_from_entry")
+    @patch("rekor_verifier.main.get_log_entry")
     @patch("builtins.print")
     def test_inclusion_successful(  # pylint: disable=too-many-arguments, too-many-positional-arguments, unused-argument
         self,
@@ -236,9 +236,9 @@ class TestConsistency:
         consistency({})
         mock_print.assert_called_once_with("please specify previous checkpoint")
 
-    @patch("main.verify_consistency")
-    @patch("main.get_consistency_proof")
-    @patch("main.get_latest_checkpoint")
+    @patch("rekor_verifier.main.verify_consistency")
+    @patch("rekor_verifier.main.get_consistency_proof")
+    @patch("rekor_verifier.main.get_latest_checkpoint")
     def test_consistency_successful(
         self,
         mock_latest: MagicMock,

@@ -5,7 +5,7 @@ import hashlib
 
 import pytest
 
-from merkle_proof import (
+from rekor_verifier.merkle_proof import (
     RFC6962_LEAF_HASH_PREFIX,
     RFC6962_NODE_HASH_PREFIX,
     DefaultHasher,

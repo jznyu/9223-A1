@@ -7,13 +7,13 @@ import os
 
 import requests
 
-from merkle_proof import (
+from rekor_verifier.merkle_proof import (
     DefaultHasher,
     compute_leaf_hash,
     verify_consistency,
     verify_inclusion,
 )
-from util import extract_public_key, verify_artifact_signature
+from rekor_verifier.util import extract_public_key, verify_artifact_signature
 
 REKOR_BASE_URL = "https://rekor.sigstore.dev"
 

@@ -1,10 +1,13 @@
 [tool.poetry]
-name = "rekor-verifier"
+name = "jz-rekor-verifier"
 version = "0.1.0"
 description = "Rekor transparency log verifier for inclusion and consistency proofs"
 authors = ["jz"]
 readme = "README.md"
-package-mode = false
+packages = [{include = "rekor_verifier"}]
+
+[tool.poetry.scripts]
+rekor-verifier = "rekor_verifier.main:_main"
 
 [tool.poetry.dependencies]
 python = ">=3.10"

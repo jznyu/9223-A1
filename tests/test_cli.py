@@ -5,13 +5,13 @@ from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
-from main import _main
+from rekor_verifier.main import _main
 
 
 class TestCLICheckpointFlag:
     """Test CLI -c/--checkpoint flag functionality."""
 
-    @patch("main.get_latest_checkpoint")
+    @patch("rekor_verifier.main.get_latest_checkpoint")
     @patch("builtins.print")
     def test_checkpoint_flag_basic(
         self, mock_print: MagicMock, mock_checkpoint: MagicMock
@@ -30,7 +30,7 @@ class TestCLICheckpointFlag:
         # Should print the checkpoint as JSON
         assert mock_print.called
 
-    @patch("main.get_latest_checkpoint")
+    @patch("rekor_verifier.main.get_latest_checkpoint")
     @patch("builtins.open", new_callable=mock_open)
     def test_checkpoint_flag_with_debug(
         self, mock_file: MagicMock, mock_checkpoint: MagicMock
@@ -50,7 +50,7 @@ class TestCLICheckpointFlag:
         # Should write to file in debug mode
         mock_file.assert_called_once()
 
-    @patch("main.get_latest_checkpoint")
+    @patch("rekor_verifier.main.get_latest_checkpoint")
     @patch("builtins.print")
     def test_checkpoint_flag_output_format(
         self, mock_print: MagicMock, mock_checkpoint: MagicMock
@@ -75,7 +75,7 @@ class TestCLICheckpointFlag:
 class TestCLIInclusionFlag:
     """Test CLI --inclusion flag functionality."""
 
-    @patch("main.inclusion")
+    @patch("rekor_verifier.main.inclusion")
     def test_inclusion_flag_with_artifact(self, mock_inclusion: MagicMock) -> None:
         """Test --inclusion flag with required --artifact argument."""
         with patch.object(
@@ -101,7 +101,7 @@ class TestCLIInclusionFlag:
 class TestCLIConsistencyFlag:
     """Test CLI --consistency flag functionality."""
 
-    @patch("main.consistency")
+    @patch("rekor_verifier.main.consistency")
     def test_consistency_flag_with_all_params(
         self, mock_consistency: MagicMock
     ) -> None:
@@ -189,7 +189,7 @@ class TestCLIConsistencyFlag:
 class TestCLIDebugFlag:
     """Test CLI -d/--debug flag functionality."""
 
-    @patch("main.get_latest_checkpoint")
+    @patch("rekor_verifier.main.get_latest_checkpoint")
     @patch("builtins.print")
     def test_debug_flag_enables_debug_mode(
         self, mock_print: MagicMock, mock_checkpoint: MagicMock
@@ -220,7 +220,7 @@ class TestCLIArgumentValidation:
         with patch.object(sys, "argv", ["main.py"]):
             _main()  # Should run without raising exception
 
-    @patch("main.get_latest_checkpoint")
+    @patch("rekor_verifier.main.get_latest_checkpoint")
     @patch("builtins.print")
     def test_multiple_flags_together(
         self, mock_print: MagicMock, mock_checkpoint: MagicMock

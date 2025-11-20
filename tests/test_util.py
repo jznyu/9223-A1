@@ -7,7 +7,7 @@ import pytest
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 
-from util import extract_public_key, verify_artifact_signature
+from rekor_verifier.util import extract_public_key, verify_artifact_signature
 
 # Sample EC private key and certificate for testing
 SAMPLE_EC_PRIVATE_KEY_PEM = b"""-----BEGIN EC PRIVATE KEY-----
