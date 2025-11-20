@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{include = "rekor_verifier"}]
 
 [tool.poetry.scripts]
-rekor-verifier = "rekor_verifier.main:_main"
+jz-rekor-verifier = "rekor_verifier.main:_main"
 
 [tool.poetry.dependencies]
 python = ">=3.10"
