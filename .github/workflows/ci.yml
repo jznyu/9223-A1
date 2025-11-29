@@ -48,8 +48,8 @@ jobs:
             - name: Run Ruff linting
               run: poetry run ruff check rekor_verifier/ tests/
 
-            - name: Run Ruff format
-              run: poetry run ruff format rekor_verifier/ tests/
+            - name: Run Ruff format check
+              run: poetry run ruff format --check rekor_verifier/ tests/
 
             - name: Run mypy type checking
               run: poetry run mypy rekor_verifier/
