@@ -16,6 +16,8 @@ jobs:
         steps:
             - name: Check out repository
               uses: actions/checkout@v5
+              with:
+                fetch-depth: 0
 
             - name: Set up Python ${{ matrix.python-version }}
               uses: actions/setup-python@v6
@@ -51,4 +53,26 @@ jobs:
 
             - name: Run mypy type checking
               run: poetry run mypy rekor_verifier/
-              
+
+            - name: Run Pylint linting
+              run: poetry run pylint rekor_verifier/ tests/
+
+            - name: Run Bandit security linting
+              run: poetry run bandit -r rekor_verifier/
+
+            - name: Run TruffleHog secret scanning
+              uses: trufflesecurity/trufflehog@main
+              with:
+                path: ./
+                base: ${{ github.event.repository.default_branch }}
+                head: HEAD
+
+            - name: Run tests with coverage
+              run: poetry run pytest --cov=rekor_verifier --cov-report=xml --cov-report=term-missing
+
+            - name: Upload coverage reports
+              uses: codecov/codecov-action@v5
+              if: matrix.python-version == '3.10'
+              with:
+                files: ./coverage.xml
+                fail_ci_if_error: false
