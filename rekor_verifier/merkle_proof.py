@@ -23,6 +23,7 @@ class HashFunction(Protocol):
         """Return the size of the digest."""
         ...  # pylint: disable=unnecessary-ellipsis
 
+
 # domain separation prefixes according to the RFC
 RFC6962_LEAF_HASH_PREFIX = 0
 RFC6962_NODE_HASH_PREFIX = 1
