@@ -31,7 +31,9 @@ def _get_entry_index(log_index: int) -> dict[str, Any]:
     return response.json()  # type: ignore[no-any-return]
 
 
-def _extract_sig_and_cert_from_entry(entry: dict[str, Any]) -> tuple[bytes, bytes, dict[str, Any]]:
+def _extract_sig_and_cert_from_entry(
+    entry: dict[str, Any],
+) -> tuple[bytes, bytes, dict[str, Any]]:
     payload = next(iter(entry.values()))
     body_b64 = payload["body"]
     body_obj = json.loads(base64.b64decode(body_b64))

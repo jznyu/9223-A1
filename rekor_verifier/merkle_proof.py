@@ -3,24 +3,25 @@
 import base64
 import binascii
 import hashlib
-from typing import Callable, Protocol
+from collections.abc import Callable
+from typing import Protocol
 
 
 class HashFunction(Protocol):
     """Protocol for hash functions."""
-    
+
     def update(self, data: bytes) -> None:
         """Update the hash with data."""
-        ...
-    
+        ...  # pylint: disable=unnecessary-ellipsis
+
     def digest(self) -> bytes:
         """Return the digest of the data."""
-        ...
-    
+        ...  # pylint: disable=unnecessary-ellipsis
+
     @property
     def digest_size(self) -> int:
         """Return the size of the digest."""
-        ...
+        ...  # pylint: disable=unnecessary-ellipsis
 
 # domain separation prefixes according to the RFC
 RFC6962_LEAF_HASH_PREFIX = 0
@@ -64,7 +65,14 @@ class Hasher:
 DefaultHasher = Hasher(hashlib.sha256)
 
 
-def verify_consistency(hasher: Hasher, size1: int, size2: int, proof: list[str], root1: str, root2: str) -> None:  # pylint: disable=too-many-locals, too-many-arguments, too-many-positional-arguments
+def verify_consistency(  # pylint: disable=too-many-locals, too-many-arguments, too-many-positional-arguments
+    hasher: Hasher,
+    size1: int,
+    size2: int,
+    proof: list[str],
+    root1: str,
+    root2: str,
+) -> None:
     """Verify consistency of two Merkle trees."""
     # change format of args to be bytearray instead of hex strings
     root1_bytes = bytes.fromhex(root1)
@@ -145,7 +153,9 @@ def chain_inner(hasher: Hasher, seed: bytes, proof: list[bytes], index: int) -> 
     return seed
 
 
-def chain_inner_right(hasher: Hasher, seed: bytes, proof: list[bytes], index: int) -> bytes:
+def chain_inner_right(
+    hasher: Hasher, seed: bytes, proof: list[bytes], index: int
+) -> bytes:
     """Chain the inner proof right."""
     for i, h in enumerate(proof):
         if (index >> i) & 1 == 1:
@@ -171,7 +181,9 @@ class RootMismatchError(Exception):
         return f"calculated root:\n{self.calculated_root.decode()}\n does not match expected root:\n{self.expected_root.decode()}"  # pylint: disable=line-too-long
 
 
-def root_from_inclusion_proof(hasher: Hasher, index: int, size: int, leaf_hash: bytes, proof: list[bytes]) -> bytes:
+def root_from_inclusion_proof(
+    hasher: Hasher, index: int, size: int, leaf_hash: bytes, proof: list[bytes]
+) -> bytes:
     """Get the root from the inclusion proof."""
     if index >= size:
         raise ValueError(f"index is beyond size: {index} >= {size}")
@@ -190,7 +202,15 @@ def root_from_inclusion_proof(hasher: Hasher, index: int, size: int, leaf_hash: 
     return res
 
 
-def verify_inclusion(hasher: Hasher, index: int, size: int, leaf_hash: str, proof: list[str], root: str, debug: bool = False) -> None:  # pylint: disable=too-many-arguments, too-many-positional-arguments
+def verify_inclusion(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    hasher: Hasher,
+    index: int,
+    size: int,
+    leaf_hash: str,
+    proof: list[str],
+    root: str,
+    debug: bool = False,
+) -> None:
     """Verify the inclusion proof."""
     bytearray_proof: list[bytes] = []
     for elem in proof:
