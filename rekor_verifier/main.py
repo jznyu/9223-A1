@@ -4,6 +4,7 @@ import argparse
 import base64
 import json
 import os
+from typing import Any
 
 import requests
 
@@ -18,19 +19,19 @@ from rekor_verifier.util import extract_public_key, verify_artifact_signature
 REKOR_BASE_URL = "https://rekor.sigstore.dev"
 
 
-def _require_positive_int(value):
+def _require_positive_int(value: int) -> None:
     if not isinstance(value, int) or value < 0:
         raise ValueError("Log index must be a non-negative integer")
 
 
-def _get_entry_index(log_index: int) -> dict:
+def _get_entry_index(log_index: int) -> dict[str, Any]:
     entry_url = f"{REKOR_BASE_URL}/api/v1/log/entries?logIndex={log_index}"
     response = requests.get(entry_url, timeout=10)
     response.raise_for_status()
-    return response.json()
+    return response.json()  # type: ignore[no-any-return]
 
 
-def _extract_sig_and_cert_from_entry(entry: dict) -> tuple[bytes, bytes, dict]:
+def _extract_sig_and_cert_from_entry(entry: dict[str, Any]) -> tuple[bytes, bytes, dict[str, Any]]:
     payload = next(iter(entry.values()))
     body_b64 = payload["body"]
     body_obj = json.loads(base64.b64decode(body_b64))
@@ -46,7 +47,7 @@ def _extract_sig_and_cert_from_entry(entry: dict) -> tuple[bytes, bytes, dict]:
     return signature, certificate_pem, payload
 
 
-def get_log_entry(log_index: int, debug=False):
+def get_log_entry(log_index: int, debug: bool = False) -> dict[str, Any]:
     """Fetch a log entry from Rekor by index.
 
     Args:
@@ -63,7 +64,7 @@ def get_log_entry(log_index: int, debug=False):
 
 
 def get_verification_proof(
-    entry: dict, debug=False
+    entry: dict[str, Any], debug: bool = False
 ) -> tuple[int, str, int, list[str], str]:
     """Get verification proof from log entry.
 
@@ -104,7 +105,7 @@ def get_verification_proof(
     return index, root_hash, tree_size, hashes, leaf_hash
 
 
-def inclusion(log_index: int, artifact_filepath: str, debug=False) -> None:
+def inclusion(log_index: int, artifact_filepath: str, debug: bool = False) -> None:
     """Verify inclusion of an entry in the Rekor Transparency Log.
 
     Args:
@@ -143,7 +144,7 @@ def inclusion(log_index: int, artifact_filepath: str, debug=False) -> None:
         )
 
 
-def get_latest_checkpoint() -> dict:
+def get_latest_checkpoint() -> dict[str, Any]:
     """Get the latest checkpoint from Rekor.
 
     Returns:
@@ -153,11 +154,11 @@ def get_latest_checkpoint() -> dict:
     response = requests.get(entry_url, timeout=10)
     response.raise_for_status()
     data = response.json()
-    return data
+    return data  # type: ignore[no-any-return]
 
 
 def get_consistency_proof(
-    last_size: int, first_size: int = 1, tree_id: str = "", debug=False
+    last_size: int, first_size: int = 1, tree_id: str = "", debug: bool = False
 ) -> list[str]:
     """Get consistency proof from Rekor.
 
@@ -179,7 +180,7 @@ def get_consistency_proof(
     response = requests.get(url, params=params, timeout=10)
     response.raise_for_status()
     data = response.json()
-    hashes = data.get("hashes", [])
+    hashes: list[str] = data.get("hashes", [])
     if debug:
         print(
             json.dumps(
@@ -194,7 +195,7 @@ def get_consistency_proof(
     return hashes
 
 
-def consistency(checkpoint: dict, debug=False):
+def consistency(checkpoint: dict[str, Any], debug: bool = False) -> None:
     """Verify consistency of a given previous checkpoint with the latest checkpoint.
 
     Args:
@@ -223,7 +224,7 @@ def consistency(checkpoint: dict, debug=False):
     )
 
 
-def _main():
+def _main() -> None:
     debug = False
     parser = argparse.ArgumentParser(description="Rekor Verifier")
     parser.add_argument(
