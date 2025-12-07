@@ -17,6 +17,7 @@ def extract_public_key(certificate_pem: bytes | str) -> bytes:
 
     Returns:
         bytes: The public key in PEM format.
+
     """
     # normalize to bytes
     certificate_bytes = (
@@ -52,6 +53,7 @@ def verify_artifact_signature(
     Returns:
         bool: True if signature verification succeeds (artifact is authentic),
               False if verification fails (signature is invalid or artifact is not authentic).
+
     """  # pylint: disable=line-too-long
     public_key = load_pem_public_key(public_key_pem)
     if not isinstance(public_key, EllipticCurvePublicKey):

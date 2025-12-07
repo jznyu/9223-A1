@@ -58,6 +58,7 @@ def get_log_entry(log_index: int, debug: bool = False) -> dict[str, Any]:
 
     Returns:
         dict: The log entry from Rekor.
+
     """
     entry = _get_entry_index(log_index)
     if debug:
@@ -81,6 +82,7 @@ def get_verification_proof(
         - tree_size: The size of the Merkle tree.
         - hashes: The list of hashes of the inclusion proof.
         - leaf_hash: The computed hash of the leaf entry.
+
     """
     payload = next(iter(entry.values()))
     inclusion_proof = payload["verification"]["inclusionProof"]
@@ -114,6 +116,7 @@ def inclusion(log_index: int, artifact_filepath: str, debug: bool = False) -> No
         log_index (int): The index of the entry in the transparency log to be verified.
         artifact_filepath (str): The filepath of the artifact to be verified.
         debug (bool, optional): Whether to print debug info. Defaults to False.
+
     """
     _require_positive_int(log_index)
     if not artifact_filepath or not os.path.isfile(artifact_filepath):
@@ -151,6 +154,7 @@ def get_latest_checkpoint() -> dict[str, Any]:
 
     Returns:
         dict: The latest checkpoint.
+
     """
     entry_url = f"{REKOR_BASE_URL}/api/v1/log"
     response = requests.get(entry_url, timeout=10)
@@ -172,6 +176,7 @@ def get_consistency_proof(
 
     Returns:
         list[str]: The consistency proof.
+
     """
     url = f"{REKOR_BASE_URL}/api/v1/log/proof"
     params: dict[str, int | str] = {"lastSize": last_size}
@@ -203,6 +208,7 @@ def consistency(checkpoint: dict[str, Any], debug: bool = False) -> None:
     Args:
         checkpoint (dict): The previous checkpoint.
         debug (bool, optional): Whether to print debug info. Defaults to False.
+
     """
     # verify that prev checkpoint is not empty
     if not checkpoint:
