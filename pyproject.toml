@@ -48,7 +48,21 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
-"tests/*.py" = ["I001"]  # Allow unsorted imports in tests (intentional lazy loading)
+"tests/*.py" = [
+    "S101",    # assert is standard for pytest
+    "PLR2004", # magic values are common in test assertions
+    "PLC0415", # imports inside test functions for isolation
+    "ARG002",  # unused arguments common with mock/patch decorators
+    "PLR0913", # many arguments needed for multiple mocks
+    "PTH108",  # os.unlink vs Path.unlink - less critical in tests
+    "PT011",   # broad pytest.raises acceptable in tests
+    "SIM105",  # try-except-pass style acceptable in tests
+    "SIM117",  # nested with statements acceptable in tests
+    "RET504",  # unnecessary assignment before return - acceptable in tests
+    "PGH003",  # specific type ignore codes - less critical in tests
+    "RUF043",  # raw string patterns - less critical in tests
+    "I001",    # import sorting - intentional lazy loading in tests
+]
 "rekor_verifier/main.py" = ["T201"]  # CLI tool - print statements are intentional for user output
 
 [tool.pylint.main]
