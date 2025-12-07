@@ -63,7 +63,9 @@ jobs:
             - name: Run TruffleHog secret scanning
               uses: trufflesecurity/trufflehog@main
               with:
-                path: ./
+                base: HEAD~1
+                head: HEAD
+                extra_args: --no-verification
 
             - name: Run tests with coverage
               run: poetry run pytest --cov=rekor_verifier --cov-report=xml --cov-report=term-missing
