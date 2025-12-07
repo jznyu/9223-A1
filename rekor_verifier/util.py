@@ -1,5 +1,7 @@
 """Utility functions for signature verification."""
 
+from pathlib import Path
+
 from cryptography import x509
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes, serialization
@@ -32,12 +34,10 @@ def extract_public_key(certificate_pem: bytes | str) -> bytes:
     # extract and return the public key (Fulcio certs use ECDSA P-256)
     public_key = certificate.public_key()
 
-    pem_public_key = public_key.public_bytes(
+    return public_key.public_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PublicFormat.SubjectPublicKeyInfo,
     )
-    # save the public key to a PEM file
-    return pem_public_key
 
 
 def verify_artifact_signature(
@@ -57,18 +57,19 @@ def verify_artifact_signature(
     """  # pylint: disable=line-too-long
     public_key = load_pem_public_key(public_key_pem)
     if not isinstance(public_key, EllipticCurvePublicKey):
-        raise TypeError(f"Expected EllipticCurvePublicKey, got {type(public_key)}")
+        msg = f"Expected EllipticCurvePublicKey, got {type(public_key)}"
+        raise TypeError(msg)
 
-    with open(artifact_filename, "rb") as data_file:
+    with Path(artifact_filename).open("rb") as data_file:
         data = data_file.read()
 
     # verify the signature
     try:
         public_key.verify(signature, data, ec.ECDSA(hashes.SHA256()))
-        print("Signature verified successfully")
-        return True
     except InvalidSignature:
-        print(  # pylint: disable=line-too-long
+        print(  # noqa: T201
             "Signature verification failed: signature is invalid or artifact is not authentic."
         )
         return False
+    print("Signature verified successfully")  # noqa: T201
+    return True

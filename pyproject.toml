@@ -49,6 +49,7 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
 "tests/*.py" = ["I001"]  # Allow unsorted imports in tests (intentional lazy loading)
+"rekor_verifier/main.py" = ["T201"]  # CLI tool - print statements are intentional for user output
 
 [tool.pylint.main]
 py-version = "3.10"

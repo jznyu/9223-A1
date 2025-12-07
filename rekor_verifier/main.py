@@ -3,7 +3,7 @@
 import argparse
 import base64
 import json
-import os
+from pathlib import Path
 from typing import Any
 
 import requests
@@ -21,7 +21,8 @@ REKOR_BASE_URL = "https://rekor.sigstore.dev"
 
 def _require_positive_int(value: int) -> None:
     if not isinstance(value, int) or value < 0:
-        raise ValueError("Log index must be a non-negative integer")
+        msg = "Log index must be a non-negative integer"
+        raise ValueError(msg)
 
 
 def _get_entry_index(log_index: int) -> dict[str, Any]:
@@ -42,14 +43,15 @@ def _extract_sig_and_cert_from_entry(
     cert_b64 = body_obj["spec"]["signature"]["publicKey"]["content"]
 
     if not sig_b64 or not cert_b64:
-        raise ValueError("Missing signature or certificate in entry")
+        msg = "Missing signature or certificate in entry"
+        raise ValueError(msg)
 
     signature = base64.b64decode(sig_b64)
     certificate_pem = base64.b64decode(cert_b64)
     return signature, certificate_pem, payload
 
 
-def get_log_entry(log_index: int, debug: bool = False) -> dict[str, Any]:
+def get_log_entry(log_index: int, *, debug: bool = False) -> dict[str, Any]:
     """Fetch a log entry from Rekor by index.
 
     Args:
@@ -67,7 +69,7 @@ def get_log_entry(log_index: int, debug: bool = False) -> dict[str, Any]:
 
 
 def get_verification_proof(
-    entry: dict[str, Any], debug: bool = False
+    entry: dict[str, Any], *, debug: bool = False
 ) -> tuple[int, str, int, list[str], str]:
     """Get verification proof from log entry.
 
@@ -109,7 +111,7 @@ def get_verification_proof(
     return index, root_hash, tree_size, hashes, leaf_hash
 
 
-def inclusion(log_index: int, artifact_filepath: str, debug: bool = False) -> None:
+def inclusion(log_index: int, artifact_filepath: str, *, debug: bool = False) -> None:
     """Verify inclusion of an entry in the Rekor Transparency Log.
 
     Args:
@@ -119,18 +121,20 @@ def inclusion(log_index: int, artifact_filepath: str, debug: bool = False) -> No
 
     """
     _require_positive_int(log_index)
-    if not artifact_filepath or not os.path.isfile(artifact_filepath):
-        raise FileNotFoundError(f"Artifact file not found at: {artifact_filepath}")
+    if not artifact_filepath or not Path(artifact_filepath).is_file():
+        msg = f"Artifact file not found at: {artifact_filepath}"
+        raise FileNotFoundError(msg)
 
-    entry = get_log_entry(log_index, debug)
+    entry = get_log_entry(log_index, debug=debug)
     signature, certificate_pem, _ = _extract_sig_and_cert_from_entry(entry)
     public_key_pem = extract_public_key(certificate_pem)
 
     if not verify_artifact_signature(signature, public_key_pem, artifact_filepath):
-        raise ValueError("Artifact signature verification failed")
+        msg = "Artifact signature verification failed"
+        raise ValueError(msg)
 
     index, root_hash, tree_size, hashes, leaf_hash = get_verification_proof(
-        entry, debug
+        entry, debug=debug
     )
 
     verify_inclusion(
@@ -159,12 +163,11 @@ def get_latest_checkpoint() -> dict[str, Any]:
     entry_url = f"{REKOR_BASE_URL}/api/v1/log"
     response = requests.get(entry_url, timeout=10)
     response.raise_for_status()
-    data = response.json()
-    return data  # type: ignore[no-any-return]
+    return response.json()  # type: ignore[no-any-return]
 
 
 def get_consistency_proof(
-    last_size: int, first_size: int = 1, tree_id: str = "", debug: bool = False
+    last_size: int, first_size: int = 1, tree_id: str = "", *, debug: bool = False
 ) -> list[str]:
     """Get consistency proof from Rekor.
 
@@ -202,7 +205,7 @@ def get_consistency_proof(
     return hashes
 
 
-def consistency(checkpoint: dict[str, Any], debug: bool = False) -> None:
+def consistency(checkpoint: dict[str, Any], *, debug: bool = False) -> None:
     """Verify consistency of a given previous checkpoint with the latest checkpoint.
 
     Args:
@@ -212,7 +215,8 @@ def consistency(checkpoint: dict[str, Any], debug: bool = False) -> None:
     """
     # verify that prev checkpoint is not empty
     if not checkpoint:
-        print("please specify previous checkpoint")
+        msg = "please specify previous checkpoint"
+        print(msg)
         return
     # get_latest_checkpoint
     latest_checkpoint = get_latest_checkpoint()
@@ -220,7 +224,7 @@ def consistency(checkpoint: dict[str, Any], debug: bool = False) -> None:
         checkpoint["treeSize"],
         latest_checkpoint["treeSize"],
         checkpoint["treeID"],
-        debug,
+        debug=debug,
     )
     verify_consistency(
         DefaultHasher,
@@ -287,11 +291,11 @@ def _main() -> None:
         filename = f"checkpoint-{checkpoint['treeID']}-{checkpoint['treeSize']}.json"
 
         if debug:
-            with open(filename, "w", encoding="utf-8") as f:
+            with Path(filename).open("w", encoding="utf-8") as f:
                 json.dump(checkpoint, f, indent=4)
             print(f"Checkpoint stored in {filename}")
     if args.inclusion:
-        inclusion(args.inclusion, args.artifact, debug)
+        inclusion(args.inclusion, args.artifact, debug=debug)
         print(
             f"\nInclusion verified for artifact {args.artifact} at log index {args.inclusion}"  # pylint: disable=line-too-long
         )
@@ -312,7 +316,7 @@ def _main() -> None:
             "rootHash": args.root_hash,
         }
 
-        consistency(prev_checkpoint, debug)
+        consistency(prev_checkpoint, debug=debug)
         print("\nConsistency verification successful")
 
 

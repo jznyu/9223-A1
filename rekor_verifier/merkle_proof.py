@@ -33,6 +33,7 @@ class Hasher:
     """Hasher class for Merkle proof verification."""
 
     def __init__(self, hash_func: Callable[[], HashFunction] = hashlib.sha256) -> None:
+        """Initialize with a hash function (defaults to SHA-256)."""
         self.hash_func = hash_func
 
     def new(self) -> HashFunction:
@@ -63,10 +64,10 @@ class Hasher:
 
 
 # DefaultHasher is a SHA256 based LogHasher
-DefaultHasher = Hasher(hashlib.sha256)
+DefaultHasher = Hasher(hashlib.sha256)  # pylint: disable=invalid-name
 
 
-def verify_consistency(  # pylint: disable=too-many-locals, too-many-arguments, too-many-positional-arguments
+def verify_consistency(  # noqa: PLR0913  # pylint: disable=too-many-locals,too-many-positional-arguments
     hasher: Hasher,
     size1: int,
     size2: int,
@@ -78,25 +79,25 @@ def verify_consistency(  # pylint: disable=too-many-locals, too-many-arguments, 
     # change format of args to be bytearray instead of hex strings
     root1_bytes = bytes.fromhex(root1)
     root2_bytes = bytes.fromhex(root2)
-    bytearray_proof: list[bytes] = []
-    for elem in proof:
-        bytearray_proof.append(bytes.fromhex(elem))
+    bytearray_proof: list[bytes] = [bytes.fromhex(elem) for elem in proof]
 
     if size2 < size1:
-        raise ValueError(f"size2 ({size2}) < size1 ({size1})")
+        msg = f"size2 ({size2}) < size1 ({size1})"
+        raise ValueError(msg)
     if size1 == size2:
         if bytearray_proof:
-            raise ValueError("size1=size2, but bytearray_proof is not empty")
+            msg = "size1=size2, but bytearray_proof is not empty"
+            raise ValueError(msg)
         verify_match(root1_bytes, root2_bytes)
         return
     if size1 == 0:
         if bytearray_proof:
-            raise ValueError(
-                f"expected empty bytearray_proof, but got {len(bytearray_proof)} components"  # pylint: disable=line-too-long
-            )
+            msg = f"expected empty bytearray_proof, but got {len(bytearray_proof)} components"  # pylint: disable=line-too-long
+            raise ValueError(msg)
         return
     if not bytearray_proof:
-        raise ValueError("empty bytearray_proof")
+        msg = "empty bytearray_proof"
+        raise ValueError(msg)
 
     inner, border = decomp_incl_proof(size1 - 1, size2)
     shift = (size1 & -size1).bit_length() - 1
@@ -110,9 +111,8 @@ def verify_consistency(  # pylint: disable=too-many-locals, too-many-arguments, 
         seed, start = bytearray_proof[0], 1
 
     if len(bytearray_proof) != start + inner + border:
-        raise ValueError(
-            f"wrong bytearray_proof size {len(bytearray_proof)}, want {start + inner + border}"  # pylint: disable=line-too-long
-        )
+        msg = f"wrong bytearray_proof size {len(bytearray_proof)}, want {start + inner + border}"  # pylint: disable=line-too-long
+        raise ValueError(msg)
 
     bytearray_proof = bytearray_proof[start:]
 
@@ -135,7 +135,7 @@ def verify_match(calculated: bytes, expected: bytes) -> None:
 def decomp_incl_proof(index: int, size: int) -> tuple[int, int]:
     """Decompose the inclusion proof."""
     inner = inner_proof_size(index, size)
-    border = bin(index >> inner).count("1")
+    border = (index >> inner).bit_count()
     return inner, border
 
 
@@ -175,10 +175,12 @@ class RootMismatchError(Exception):
     """Root mismatch error."""
 
     def __init__(self, expected_root: bytes, calculated_root: bytes) -> None:
+        """Initialize with expected and calculated root hashes."""
         self.expected_root = binascii.hexlify(bytearray(expected_root))
         self.calculated_root = binascii.hexlify(bytearray(calculated_root))
 
     def __str__(self) -> str:
+        """Return a human-readable error message."""
         return f"calculated root:\n{self.calculated_root.decode()}\n does not match expected root:\n{self.expected_root.decode()}"  # pylint: disable=line-too-long
 
 
@@ -187,35 +189,34 @@ def root_from_inclusion_proof(
 ) -> bytes:
     """Get the root from the inclusion proof."""
     if index >= size:
-        raise ValueError(f"index is beyond size: {index} >= {size}")
+        msg = f"index is beyond size: {index} >= {size}"
+        raise ValueError(msg)
 
     if len(leaf_hash) != hasher.size():
-        raise ValueError(
-            f"leaf_hash has unexpected size {len(leaf_hash)}, want {hasher.size()}"
-        )
+        msg = f"leaf_hash has unexpected size {len(leaf_hash)}, want {hasher.size()}"
+        raise ValueError(msg)
 
     inner, border = decomp_incl_proof(index, size)
     if len(proof) != inner + border:
-        raise ValueError(f"wrong proof size {len(proof)}, want {inner + border}")
+        msg = f"wrong proof size {len(proof)}, want {inner + border}"
+        raise ValueError(msg)
 
-    res = chain_inner(hasher, leaf_hash, proof[:inner], index)
-    res = chain_border_right(hasher, res, proof[inner:])
-    return res
+    inner_result = chain_inner(hasher, leaf_hash, proof[:inner], index)
+    return chain_border_right(hasher, inner_result, proof[inner:])
 
 
-def verify_inclusion(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+def verify_inclusion(  # noqa: PLR0913  # pylint: disable=too-many-positional-arguments
     hasher: Hasher,
     index: int,
     size: int,
     leaf_hash: str,
     proof: list[str],
     root: str,
+    *,
     debug: bool = False,
 ) -> None:
     """Verify the inclusion proof."""
-    bytearray_proof: list[bytes] = []
-    for elem in proof:
-        bytearray_proof.append(bytes.fromhex(elem))
+    bytearray_proof: list[bytes] = [bytes.fromhex(elem) for elem in proof]
 
     bytearray_root = bytes.fromhex(root)
     bytearray_leaf = bytes.fromhex(leaf_hash)
@@ -224,8 +225,8 @@ def verify_inclusion(  # pylint: disable=too-many-arguments, too-many-positional
     )
     verify_match(calc_root, bytearray_root)
     if debug:
-        print("Calculated root hash", calc_root.hex())
-        print("Given root hash", bytearray_root.hex())
+        print("Calculated root hash", calc_root.hex()) # noqa: T201
+        print("Given root hash", bytearray_root.hex()) # noqa: T201
 
 
 # requires entry["body"] output for a log entry

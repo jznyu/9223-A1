@@ -21,22 +21,19 @@ from rekor_verifier.util import extract_public_key, verify_artifact_signature
 __version__ = "4.0.0"
 
 __all__ = [
-    # Main functions
+    "DefaultHasher",
+    "Hasher",
+    "RootMismatchError",
+    "__version__",
+    "compute_leaf_hash",
     "consistency",
+    "extract_public_key",
     "get_consistency_proof",
     "get_latest_checkpoint",
     "get_log_entry",
     "get_verification_proof",
     "inclusion",
-    # Merkle proof functions
-    "DefaultHasher",
-    "Hasher",
-    "RootMismatchError",
-    "compute_leaf_hash",
+    "verify_artifact_signature",
     "verify_consistency",
     "verify_inclusion",
-    # Utility functions
-    "extract_public_key",
-    "verify_artifact_signature",
-    "__version__",
 ]

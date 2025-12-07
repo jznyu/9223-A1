@@ -31,7 +31,7 @@ class TestCLICheckpointFlag:
         assert mock_print.called
 
     @patch("rekor_verifier.main.get_latest_checkpoint")
-    @patch("builtins.open", new_callable=mock_open)
+    @patch("pathlib.Path.open", new_callable=mock_open)
     def test_checkpoint_flag_with_debug(
         self, mock_file: MagicMock, mock_checkpoint: MagicMock
     ) -> None:
