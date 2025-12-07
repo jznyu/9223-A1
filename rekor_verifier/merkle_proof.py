@@ -225,8 +225,8 @@ def verify_inclusion(  # noqa: PLR0913  # pylint: disable=too-many-positional-ar
     )
     verify_match(calc_root, bytearray_root)
     if debug:
-        print("Calculated root hash", calc_root.hex()) # noqa: T201
-        print("Given root hash", bytearray_root.hex()) # noqa: T201
+        print("Calculated root hash", calc_root.hex())  # noqa: T201
+        print("Given root hash", bytearray_root.hex())  # noqa: T201
 
 
 # requires entry["body"] output for a log entry
