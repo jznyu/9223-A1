@@ -1,4 +1,10 @@
-# Description
+# Python Rekor Monitor
+
+[![CI](https://github.com/jznyu/9223-A1/actions/workflows/ci.yml/badge.svg)](https://github.com/jznyu/9223-A1/actions/workflows/ci.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/jznyu/9223-A1/badge)](https://scorecard.dev/viewer/?uri=github.com/jznyu/9223-A1)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11578/badge)](https://www.bestpractices.dev/projects/11578)
+
+## Description
 This project provides a way to verify the Rekor transparency log, which records artifact signatures to provide tamper-proof evidence that something was signed at a specific time.
 
 There are three main verfifcation operations that can be performed:
