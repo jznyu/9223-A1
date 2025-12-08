@@ -32,7 +32,9 @@ jobs:
               run: poetry install --no-interaction
 
             - name: Build package
-              run: poetry build
+              run: |
+                rm -rf dist/
+                poetry build
 
             - name: Generate SBOM
               run: poetry run cyclonedx-py poetry -o cyclonedx-sbom.json
