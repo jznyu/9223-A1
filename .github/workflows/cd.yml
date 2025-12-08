@@ -9,6 +9,10 @@ on:
 jobs:
     build:
         runs-on: ubuntu-latest
+        permissions:
+            id-token: write
+            contents: write # to create release notes
+            attestations: write
         steps:
             - name: Checkout repository
               uses: actions/checkout@v5
@@ -30,9 +34,33 @@ jobs:
             - name: Build package
               run: poetry build
 
+            - name: Generate SBOM
+              run: poetry run cyclonedx-py poetry -o cyclonedx-sbom.json
+                
             - name: Upload build artifacts
               uses: actions/upload-artifact@v4
               id: artifact-upload
               with:
                 name: dist
                 path: dist/
+
+            - name: Attest SBOM
+              uses: actions/attest-sbom@v3
+              id: attest
+              with:
+                subject-path: dist/
+                sbom-path: cyclonedx-sbom.json
+
+            - name: Upload Attestation
+              uses: actions/upload-artifact@v4
+              with:
+                name: attestation
+                path: ${{ steps.attest.outputs.bundle-path }}
+
+            - name: Create GitHub Release
+              uses: softprops/action-gh-release@v2
+              with:
+                files: |
+                  dist/*
+                  cyclonedx-sbom.json
+                  ${{ steps.attest.outputs.bundle-path }}
